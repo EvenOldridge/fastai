@@ -185,9 +185,14 @@ class LanguageModelLoader():
         return source[i:i+seq_len], source[i+1:i+1+seq_len].view(-1)
 
 class RNN_Learner(Learner):
-    def __init__(self, data, models, **kwargs):
+    def __init__(self, data, models, ignorepadding = False,  **kwargs):
         super().__init__(data, models, **kwargs)
-        self.crit = F.cross_entropy
+        if ignorepadding:
+            # Need to overload this so that it ignores zeros
+            self.crit = lambda i, t: F.cross_entropy(i, t, ignore_index=0, size_average=True)
+        else:
+            self.crit = F.cross_entropy
+
 
     def save_encoder(self, name): save_model(self.model[0], self.get_model_path(name))
     def load_encoder(self, name): load_model(self.model[0], self.get_model_path(name))

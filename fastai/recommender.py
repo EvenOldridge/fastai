@@ -174,7 +174,7 @@ def flip_tensor(x, dim):
     return x.view(xsize)
 
 
-class LanguageModelLoader():
+class SessionRecommenderModelLoader():
 
     def __init__(self, ds, bs, bptt, backwards=False):
         self.bs,self.bptt,self.backwards = bs,bptt,backwards
@@ -212,13 +212,14 @@ class LanguageModelLoader():
         seq_len = min(seq_len, len(source) - 1 - i)
         return source[i:i+seq_len], source[i+1:i+1+seq_len].view(-1)
 
-class RNN_Learner(Learner):
-    def __init__(self, data, models, **kwargs):
-        super().__init__(data, models, **kwargs)
-        self.crit = F.cross_entropy
+# This class exists in nlp.py and has been modified
+#class RNN_Learner(Learner):
+#    def __init__(self, data, models, **kwargs):
+#        super().__init__(data, models, **kwargs)
+#        self.crit = F.cross_entropy
 
-    def save_encoder(self, name): save_model(self.model[0], self.get_model_path(name))
-    def load_encoder(self, name): load_model(self.model[0], self.get_model_path(name))
+#    def save_encoder(self, name): save_model(self.model[0], self.get_model_path(name))
+#    def load_encoder(self, name): load_model(self.model[0], self.get_model_path(name))
 
 
 class ConcatTextDataset(torchtext.data.Dataset):
@@ -256,9 +257,11 @@ class ConcatTextDatasetFromDataFrames(torchtext.data.Dataset):
         return tuple(d for d in (train_data, val_data, test_data) if d is not None)
 
 
-class LanguageModelData():
+class SessionRecommenderModelData():
     """
-    This class provides the entry point for dealing with supported NLP tasks.
+    This class provides the entry point for dealing with supported Session Recommender tasks.
+    Rooted in NLP, Session based recommendation treats each session as a sentence and attempts to
+    build the equivalent of a language model
     Usage:
     1.  Use one of the factory constructors (from_dataframes, from_text-files) to
         obtain an instance of the class.
@@ -288,7 +291,7 @@ class LanguageModelData():
             that the field's "build_vocab" method is invoked, which builds the vocabulary
             for this NLP model.
 
-            Also, three instances of the LanguageModelLoader is constructed; one each
+            Also, three instances of the SessionRecommenderModelLoader is constructed; one each
             for training data (self.trn_dl), validation data (self.val_dl), and the
             testing data (self.test_dl)
 
@@ -310,7 +313,7 @@ class LanguageModelData():
         self.pad_idx = field.vocab.stoi[field.pad_token]
         self.nt = len(field.vocab)
 
-        self.trn_dl, self.val_dl, self.test_dl = [LanguageModelLoader(ds, bs, bptt, backwards=backwards)
+        self.trn_dl, self.val_dl, self.test_dl = [SessionRecommenderModelLoader(ds, bs, bptt, backwards=backwards)
                                                   for ds in (self.trn_ds, self.val_ds, self.test_ds) ]
 
     def get_model(self, opt_fn, emb_sz, n_hid, n_layers, **kwargs):
@@ -327,7 +330,8 @@ class LanguageModelData():
             An instance of the RNN_Learner class.
 
         """
-        m = get_language_model(self.bs, self.nt, emb_sz, n_hid, n_layers, self.pad_idx, **kwargs)
+        m = get_language_model(self.bs, self.nt, emb_sz, n_hid, n_layers, pad_token=0, **kwargs)
+        # Setting pad_token = 0
         model = SingleModel(to_gpu(m))
         return RNN_Learner(self, model, opt_fn=opt_fn)
 
