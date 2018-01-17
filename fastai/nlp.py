@@ -185,11 +185,11 @@ class LanguageModelLoader():
         return source[i:i+seq_len], source[i+1:i+1+seq_len].view(-1)
 
 class RNN_Learner(Learner):
-    def __init__(self, data, models, ignorepadding = False,  **kwargs):
+    def __init__(self, data, models, pad_idx = None,  **kwargs):
         super().__init__(data, models, **kwargs)
-        if ignorepadding:
+        if pad_idx != None:
             # Need to overload this so that it ignores zeros
-            self.crit = lambda i, t: F.cross_entropy(i, t, ignore_index=0, size_average=True)
+            self.crit = lambda i, t: F.cross_entropy(i, t, ignore_index=pad_idx, size_average=True)
         else:
             self.crit = F.cross_entropy
 
@@ -306,7 +306,7 @@ class LanguageModelData():
         """
         m = get_language_model(self.bs, self.nt, emb_sz, n_hid, n_layers, self.pad_idx, **kwargs)
         model = SingleModel(to_gpu(m))
-        return RNN_Learner(self, model, opt_fn=opt_fn)
+        return RNN_Learner(self, model, pad_idx=self.pad_idx, opt_fn=opt_fn)
 
     @classmethod
     def from_dataframes(cls, path, field, col, train_df, val_df, test_df=None, bs=64, bptt=70, **kwargs):
