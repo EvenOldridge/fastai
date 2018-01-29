@@ -86,6 +86,7 @@ class RNN_Encoder(nn.Module):
         emb = self.dropouti(emb)
 
         raw_output = emb
+        #emb_output = emb
         new_hidden,raw_outputs,outputs = [],[],[]
         for l, (rnn,drop) in enumerate(zip(self.rnns, self.dropouths)):
             current_input = raw_output
@@ -154,7 +155,7 @@ class LinearDecoder(LinearRNNOutput):
     """
     def __init__(self, n_out, nhid, dropout, tie_encoder=None):
         super().__init__(n_out, nhid, dropout)
-        if tie_encoder: self.decoder.weight = tie_encoder.weight
+        if tie_encoder: self.decoder.weight = tie_encoder.weight # this takes a whole additional copy does it not?
 
     def forward(self, input):
         output, raw_outputs, outputs = super().forward(input)
