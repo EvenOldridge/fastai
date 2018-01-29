@@ -165,8 +165,12 @@ class LanguageModelLoader():
 
     def __next__(self):
         if self.i >= self.n-1 or self.iter>=len(self): raise StopIteration
-        bptt = self.bptt if np.random.random() < 0.95 else self.bptt / 2.
-        seq_len = max(5, int(np.random.normal(bptt, 5)))
+        if self.i == 0:
+            # start with the max possible sequence.  pytorch allocates memory iteratively
+            seq_len = self.bptt+5*5
+        else:
+            bptt = self.bptt if np.random.random() < 0.95 else self.bptt / 2.
+            seq_len = max(5, int(np.random.normal(bptt, 5)))
         res = self.get_batch(self.i, seq_len)
         self.i += seq_len
         self.iter += 1
@@ -185,9 +189,9 @@ class LanguageModelLoader():
         return source[i:i+seq_len], source[i+1:i+1+seq_len].view(-1)
 
 class RNN_Learner(Learner):
-    def __init__(self, data, models, pad_idx = None,  **kwargs):
+    def __init__(self, data, models, pad_idx=None,  **kwargs):
         super().__init__(data, models, **kwargs)
-        if pad_idx != None:
+        if pad_idx is not None:
             # Need to overload this so that it ignores zeros
             self.crit = lambda i, t: F.cross_entropy(i, t, ignore_index=pad_idx, size_average=True)
         else:
