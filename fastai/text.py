@@ -166,13 +166,16 @@ class LanguageModelData():
     def get_model(self, opt_fn, emb_sz, n_hid, n_layers, **kwargs):
         m = get_language_model(self.nt, emb_sz, n_hid, n_layers, self.pad_idx, **kwargs)
         model = LanguageModel(to_gpu(m))
-        return RNN_Learner(self, model, opt_fn=opt_fn)
+        return RNN_Learner(self, model, pad_idx=self.pad_idx, opt_fn=opt_fn)
 
 
 class RNN_Learner(Learner):
-    def __init__(self, data, models, **kwargs):
+    def __init__(self, data, models, pad_idx=None, **kwargs):
         super().__init__(data, models, **kwargs)
-        self.crit = F.cross_entropy
+        if pad_idx is not None:
+            self.crit = lambda i, t: F.cross_entropy(i, t, ignore_index=pad_idx, size_average=True)
+        else:
+            self.crit = F.cross_entropy
 
     def save_encoder(self, name): save_model(self.model[0], self.get_model_path(name))
     def load_encoder(self, name): load_model(self.model[0], self.get_model_path(name))
