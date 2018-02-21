@@ -149,6 +149,7 @@ class LinearDecoder(nn.Module):
         return result, raw_outputs, outputs
 
 
+
 class LinearBlock(nn.Module):
     def __init__(self, ni, nf, drop):
         super().__init__()

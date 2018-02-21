@@ -173,7 +173,7 @@ class RNN_Learner(Learner):
     def __init__(self, data, models, pad_idx=None, **kwargs):
         super().__init__(data, models, **kwargs)
         if pad_idx is not None:
-            self.crit = lambda i, t: F.cross_entropy(i, t, ignore_index=pad_idx, size_average=True)
+            self.crit = F.cross_entropy #lambda i, t: F.cross_entropy(i, t, ignore_index=pad_idx, size_average=True)
         else:
             self.crit = F.cross_entropy
 
