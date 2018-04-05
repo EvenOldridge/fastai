@@ -120,7 +120,7 @@ class LanguageModelLoader():
         self.bs,self.bptt,self.backwards = bs,bptt,backwards
         text = sum([o.text for o in ds], [])
         fld = ds.fields['text']
-        nums = fld.numericalize([text])
+        nums = fld.numericalize([text],device=None if torch.cuda.is_available() else -1)
         self.data = self.batchify(nums)
         self.i,self.iter = 0,0
         self.n = len(self.data)
@@ -326,7 +326,7 @@ class TextDataLoader():
         it = iter(self.src)
         for i in range(len(self)):
             b = next(it)
-            yield getattr(b, self.x_fld), getattr(b, self.y_fld)
+            yield getattr(b, self.x_fld).data, getattr(b, self.y_fld).data
 
 
 class TextModel(BasicModel):
